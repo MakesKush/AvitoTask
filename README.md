@@ -24,7 +24,7 @@
 - Получить статистику по айтем id
 **Host - https://qa-internship.avito.com**
 
-**Postman коллекция: - тут**
+**Postman коллекция: - [тут](https://github.com/MakesKush/AvitoTask/blob/main/postman_collection.json)**
 
 **Краткое описание сервиса:**
 
