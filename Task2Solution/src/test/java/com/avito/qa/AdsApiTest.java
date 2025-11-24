@@ -11,7 +11,6 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
-
 public class AdsApiTest extends BaseApiTest {
 
     private Map<String, Object> buildValidItemBody(long sellerId) {
@@ -29,21 +28,25 @@ public class AdsApiTest extends BaseApiTest {
         return body;
     }
 
+    /**
+     * Создаёт объявление и возвращает его id, который сервис
+     * прячет в строке "Сохранили объявление - <uuid>".
+     */
     private String createItemAndGetId(long sellerId) {
         ValidatableResponse response =
                 given()
                         .contentType(ContentType.JSON)
                         .body(buildValidItemBody(sellerId))
-                .when()
+                        .when()
                         .post(CREATE_ITEM_PATH)
-                .then()
+                        .then()
                         .statusCode(200)
-                        .body("status", equalTo("ok"))
-                        .body("result.itemId", notNullValue());
+                        .body("status", startsWith("Сохранили объявление - "));
 
-        return String.valueOf(response.extract().path("result.itemId"));
+        String status = response.extract().path("status");
+        // достаем id после последнего пробела
+        return status.substring(status.lastIndexOf(" ") + 1);
     }
-
 
     @Test
     @DisplayName("POST /api/1/item – успешное создание объявления")
@@ -53,12 +56,12 @@ public class AdsApiTest extends BaseApiTest {
         given()
                 .contentType(ContentType.JSON)
                 .body(buildValidItemBody(sellerId))
-        .when()
+                .when()
                 .post(CREATE_ITEM_PATH)
-        .then()
+                .then()
                 .statusCode(200)
-                .body("status", equalTo("ok"))
-                .body("result.itemId", notNullValue());
+                // проверяем только реальный статус, без несуществующего result.itemId
+                .body("status", startsWith("Сохранили объявление - "));
     }
 
     @Test
@@ -77,12 +80,11 @@ public class AdsApiTest extends BaseApiTest {
         given()
                 .contentType(ContentType.JSON)
                 .body(body)
-        .when()
+                .when()
                 .post(CREATE_ITEM_PATH)
-        .then()
+                .then()
                 .statusCode(400);
     }
-
 
     @Test
     @DisplayName("GET /api/1/item/{id} – получение существующего объявления")
@@ -91,9 +93,9 @@ public class AdsApiTest extends BaseApiTest {
         String itemId = createItemAndGetId(sellerId);
 
         given()
-        .when()
+                .when()
                 .get(GET_ITEM_BY_ID_PATH, itemId)
-        .then()
+                .then()
                 .statusCode(200)
                 .body("result.id", notNullValue())
                 .body("result.name", notNullValue())
@@ -107,9 +109,9 @@ public class AdsApiTest extends BaseApiTest {
         String randomId = "00000000-0000-0000-0000-000000000000";
 
         given()
-        .when()
+                .when()
                 .get(GET_ITEM_BY_ID_PATH, randomId)
-        .then()
+                .then()
                 .statusCode(404);
     }
 
@@ -117,14 +119,17 @@ public class AdsApiTest extends BaseApiTest {
     @DisplayName("GET /api/1/{sellerID}/item – список объявлений продавца")
     void getItemsBySeller_success() {
         long sellerId = 222222L;
-        createItemAndGetId(sellerId);
+        String itemId = createItemAndGetId(sellerId);
 
         given()
-        .when()
+                .when()
                 .get(GET_ITEMS_BY_SELLER_PATH, sellerId)
-        .then()
+                .then()
                 .statusCode(200)
-                .body("status", equalTo("ok"));
+                // массив объявлений не пустой
+                .body("size()", greaterThan(0))
+                // среди id объявлений есть только что созданное нами
+                .body("id", hasItem(itemId));
     }
 
     @Test
@@ -133,13 +138,12 @@ public class AdsApiTest extends BaseApiTest {
         long negativeSellerId = -222222L;
 
         given()
-        .when()
+                .when()
                 .get(GET_ITEMS_BY_SELLER_PATH, negativeSellerId)
-        .then()
-                // ожидаемое поведение: 400, но фактически сейчас 200
+                .then()
+                // ожидаемое поведение: 400, но фактически сейчас 200 (фиксируем баг)
                 .statusCode(200);
     }
-
 
     @Test
     @DisplayName("GET /api/1/statistic/{id} – статистика для существующего объявления")
@@ -148,9 +152,9 @@ public class AdsApiTest extends BaseApiTest {
         String itemId = createItemAndGetId(sellerId);
 
         given()
-        .when()
+                .when()
                 .get(GET_STATISTIC_V1_PATH, itemId)
-        .then()
+                .then()
                 .statusCode(200)
                 .body("result.likes", notNullValue())
                 .body("result.viewCount", notNullValue())
@@ -163,9 +167,9 @@ public class AdsApiTest extends BaseApiTest {
         String randomId = "00000000-0000-0000-0000-000000000000";
 
         given()
-        .when()
+                .when()
                 .get(GET_STATISTIC_V1_PATH, randomId)
-        .then()
+                .then()
                 .statusCode(404);
     }
 
@@ -176,9 +180,9 @@ public class AdsApiTest extends BaseApiTest {
         String itemId = createItemAndGetId(sellerId);
 
         given()
-        .when()
+                .when()
                 .delete(DELETE_ITEM_V2_PATH, itemId)
-        .then()
+                .then()
                 .statusCode(200);
     }
 
@@ -188,9 +192,9 @@ public class AdsApiTest extends BaseApiTest {
         String randomId = "00000000-0000-0000-0000-000000000000";
 
         given()
-        .when()
+                .when()
                 .delete(DELETE_ITEM_V2_PATH, randomId)
-        .then()
+                .then()
                 .statusCode(404);
     }
 }
