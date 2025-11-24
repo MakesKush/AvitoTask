@@ -8,4 +8,4 @@
 
 Задание 1
 Перед вами скриншот страницы карьерного сайта Авито. Изучите его, перечислите все имеющиеся баги, и укажите их приоритет (high, medium, low). Объясните, почему багам присвоенны именно они.
-<img width="1071" height="826" alt="image" src="https://github.com/user-attachments/assets/502f18bf-c029-4fce-955e-94000ac610eb" />
+![Image alt](https://github.com/MakesKush/AvitoTask/blob/main/Bugs.png)
