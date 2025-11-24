@@ -28,10 +28,6 @@ public class AdsApiTest extends BaseApiTest {
         return body;
     }
 
-    /**
-     * Создаёт объявление и возвращает его id, который сервис
-     * прячет в строке "Сохранили объявление - <uuid>".
-     */
     private String createItemAndGetId(long sellerId) {
         ValidatableResponse response =
                 given()
